@@ -30,6 +30,10 @@ build()
 
   cd "$GOPATH/src/github.com/exzz/emon-collector-go"
 
+  echo "Downloading dependencies"
+  go get github.com/sparrc/gdm
+  gdm restore 
+
   go install emon-collector.go
 }
 
