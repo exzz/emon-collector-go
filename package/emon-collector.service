@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect and log energy monitor output
+After=network-online.target
+
+[Service]
+User=nobody
+Group=nobody
+ExecStart=/usr/bin/emon-collector -config /etc/emon-collector.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

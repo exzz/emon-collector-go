@@ -1,0 +1,47 @@
+pkgname='emon-collector'
+_gitname='emon-collector'
+pkgver='1'
+pkgrel='1'
+pkgdesc=''
+arch=('i686' 'x86_64')
+url=''
+license=('')
+depends=('go')
+makedepends=('go' 'git')
+provides=('emon-collector')
+backup=('etc/emon-collector.conf')
+source=('git+https://github.com/exzz/emon-collector'
+        'emon-collector.install')
+md5sums=('SKIP'
+         'SKIP')
+
+pkgver() {
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build()
+{
+  export GOPATH="$srcdir"
+  export GOBIN="$GOPATH/bin"
+  export PATH="$GOBIN:$PATH"
+
+  mkdir -p "$GOPATH/src/github.com/exzz"
+  mv -f "$srcdir/emon-collector" "$GOPATH/src/github.com/exzz/"
+
+  cd "$GOPATH/src/github.com/exzz/emon-collector"
+
+  go install emon-collector.go
+}
+
+package()
+{
+  cd "$GOPATH/src/github.com/exzz/emon-collector"
+  install -Dm644 sample.conf "$pkgdir/etc/emon-collector.conf"
+
+  cd "$GOPATH/src/github.com/exzz/emon-collector/package"
+  install -Dm644 emon-collector.sysusers "$pkgdir/usr/lib/sysusers.d/emon-collector.conf"
+  install -Dm644 emon-collector.service "$pkgdir/usr/lib/systemd/system/emon-collector.service"
+
+  cd "$GOBIN"
+  install -Dsm755 $GOBIN/emon-collector "$pkgdir/usr/bin/emon-collector"
+}
