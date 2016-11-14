@@ -10,7 +10,7 @@ depends=('go')
 makedepends=('go' 'git')
 provides=('emon-collector')
 backup=('etc/emon-collector.conf')
-source=('git+https://github.com/exzz/emon-collector'
+source=('git+https://github.com/exzz/emon-collector-go'
         'emon-collector.install')
 md5sums=('SKIP'
          'SKIP')
@@ -26,19 +26,19 @@ build()
   export PATH="$GOBIN:$PATH"
 
   mkdir -p "$GOPATH/src/github.com/exzz"
-  mv -f "$srcdir/emon-collector" "$GOPATH/src/github.com/exzz/"
+  mv -f "$srcdir/emon-collector-go" "$GOPATH/src/github.com/exzz/"
 
-  cd "$GOPATH/src/github.com/exzz/emon-collector"
+  cd "$GOPATH/src/github.com/exzz/emon-collector-go"
 
   go install emon-collector.go
 }
 
 package()
 {
-  cd "$GOPATH/src/github.com/exzz/emon-collector"
+  cd "$GOPATH/src/github.com/exzz/emon-collector-go"
   install -Dm644 sample.conf "$pkgdir/etc/emon-collector.conf"
 
-  cd "$GOPATH/src/github.com/exzz/emon-collector/package"
+  cd "$GOPATH/src/github.com/exzz/emon-collector-go/package"
   install -Dm644 emon-collector.sysusers "$pkgdir/usr/lib/sysusers.d/emon-collector.conf"
   install -Dm644 emon-collector.service "$pkgdir/usr/lib/systemd/system/emon-collector.service"
 
