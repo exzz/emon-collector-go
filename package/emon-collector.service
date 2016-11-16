@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 User=nobody
 Group=nobody
-ExecStart=/usr/bin/emon-collector -config /etc/emon-collector.conf
+ExecStart=/usr/bin/emon-collector -f /etc/emon-collector.conf
 Restart=on-failure
 
 [Install]

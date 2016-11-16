@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
+	"os"
 	"time"
 
 	toml "github.com/BurntSushi/toml"
@@ -11,8 +12,8 @@ import (
 )
 
 // Command line flag
-var fConfig = flag.String("config", "", "configuration file to load")
-var fVerbose = flag.Bool("verbose", false, "log read value")
+var fConfig = flag.String("f", "", "Configuration file")
+var fDebug = flag.Bool("d", false, "Verbose")
 
 // Configuration file
 type collectorConfig struct {
@@ -40,19 +41,25 @@ func main() {
 
 	// Parse command line flags
 	flag.Parse()
-
-	if _, err := toml.DecodeFile(*fConfig, &config); err != nil {
-		log.Fatalf("Cannot parse config file: %s", err)
+	if *fConfig == "" {
+		fmt.Printf("Missing required argument -f\n")
+		os.Exit(0)
 	}
 
-	log.Printf("Starting %v\n", config)
+	if _, err := toml.DecodeFile(*fConfig, &config); err != nil {
+		fmt.Printf("Cannot parse config file: %s\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Starting\n")
 
 	// set up
 	emon, err := emon.NewClient(emon.Config{
 		URL: config.Emon.URL,
 	})
 	if err != nil {
-		log.Fatalf("Unable to connect to Energymonitor: %s", err)
+		fmt.Printf("Unable to connect to Energymonitor: %s\n", err)
+		os.Exit(1)
 	}
 
 	influxdb, err := client.NewHTTPClient(client.HTTPConfig{
@@ -61,7 +68,8 @@ func main() {
 		Password: config.Influxdb.Password,
 	})
 	if err != nil {
-		log.Fatalf("Unable to connect to InfluxDB: %s", err.Error())
+		fmt.Print("Unable to connect to InfluxDB: %s\n", err.Error())
+		os.Exit(1)
 	}
 
 	// main loop
@@ -75,7 +83,7 @@ func main() {
 			// read data
 			err := emon.Read()
 			if err != nil {
-				log.Printf("Cannot fetch EnergyMonitor data: %s", err)
+				fmt.Printf("Cannot fetch EnergyMonitor data: %s\n", err)
 				continue
 			}
 
@@ -94,7 +102,7 @@ func main() {
 
 			pt, err := client.NewPoint("power", tags, fields, time.Unix(int64(emon.Sensor.Time), 0))
 			if err != nil {
-				log.Printf("Cannot create infludb point: %s", err.Error())
+				fmt.Printf("Cannot create infludb point: %s\n", err.Error())
 				continue
 			}
 			bp.AddPoint(pt)
@@ -102,13 +110,13 @@ func main() {
 			// write infludb point
 			err = influxdb.Write(bp)
 			if err != nil {
-				log.Printf("Cannot write infludb point: %s", err.Error())
+				fmt.Printf("Cannot write infludb point: %s\n", err.Error())
 				continue
 			}
 
 			// log read value
-			if *fVerbose {
-				log.Printf("%+v\n", emon.Sensor)
+			if *fDebug {
+				fmt.Printf("%+v\n", emon.Sensor)
 			}
 		}
 	}
